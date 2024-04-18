@@ -1,9 +1,16 @@
 package com.example.custom_model_deployment
 
 import android.content.Context
+import android.content.res.AssetManager
 import com.google.android.gms.tflite.client.TfLiteInitializationOptions
 import com.google.android.gms.tflite.gpu.support.TfLiteGpu
 import com.google.android.gms.tflite.java.TfLite
+import java.io.FileInputStream
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
+import java.security.cert.CertPath
 
 class PredictionHelper(
     private var modelName: String = "rice_stock.tflite",
@@ -24,10 +31,35 @@ class PredictionHelper(
             TfLite.initialize(context, optionsBuilder.build())
         }
             .addOnSuccessListener {
-                TODO()
+                loadLocalModel()
             }
             .addOnFailureListener {
                 onError(context.getString(R.string.tflite_is_not_initialized_yet))
             }
     }
+
+    //load machine learning model
+    private fun loadLocalModel() {
+        try {
+            val buffer: ByteBuffer = loadModelFile(context.assets, modelName)
+        }catch (ioExeption: IOException){
+
+        }
+    }
+
+    private fun loadModelFile(assetManager: AssetManager, modelPath: String): MappedByteBuffer{
+        assetManager.openFd(modelPath).use { fileDescriptor ->
+            FileInputStream(fileDescriptor.fileDescriptor).use { inputStream ->
+                val fileChannel = inputStream.channel
+                val starOffset = fileDescriptor.startOffset
+                val declaredLength = fileDescriptor.declaredLength
+                return fileChannel.map(FileChannel.MapMode.READ_ONLY,starOffset,declaredLength)
+            }
+        }
+    }
+
+    companion object{
+        private const val TAG = "PredictionHelper"
+    }
+
 }
