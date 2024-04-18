@@ -69,6 +69,23 @@ class PredictionHelper(
         }
     }
 
+    fun predict(inputString: String) {
+        if (interpreter == null) {
+            return
+        }
+
+        val inputArray = FloatArray(1)
+        inputArray[0] = inputString.toFloat()
+        val outputArray = Array(1) { FloatArray(1) }
+        try {
+            interpreter?.run(inputArray, outputArray)
+            onResult(outputArray[0][0].toString())
+        } catch (e: Exception) {
+            onError(context.getString(R.string.no_tflite_interpreter_loaded))
+            Log.e(TAG, e.message.toString())
+        }
+    }
+
     fun close(){
         interpreter?.close()
     }
