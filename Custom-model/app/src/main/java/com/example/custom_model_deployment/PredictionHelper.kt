@@ -59,6 +59,7 @@ class PredictionHelper(
             .addOnSuccessListener { model: CustomModel ->
                 try {
                     onDownloadSuccess()
+                    initializeInterpreter(model) // menginisialisasi interpreter TensorFlow Lite
                 } catch (e: IOException) {
                     onError(e.message.toString())
                 }
@@ -68,6 +69,7 @@ class PredictionHelper(
             }
     }
 
+    // menginisialisasi interpreter TensorFlow Lite
     private fun initializeInterpreter(model: Any) {
         interpreter?.close()
         try {
@@ -78,6 +80,10 @@ class PredictionHelper(
             }
             if (model is ByteBuffer) {
                 interpreter = InterpreterApi.create(model, options)
+            }else if (model is CustomModel){
+                model.file?.let{
+                    interpreter = InterpreterApi.create(it, options)
+                }
             }
         } catch (e: Exception) {
             onError(e.message.toString())
