@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -34,7 +35,7 @@ android {
         jvmTarget = "1.8"
     }
 
-    buildFeatures{
+    buildFeatures {
         viewBinding = true
         mlModelBinding = true
     }
@@ -52,4 +53,10 @@ dependencies {
 
     implementation(libs.play.services.tflite.java)
     implementation(libs.play.services.tflite.gpu)
+
+    // Import the Firebase BoM
+    implementation(libs.firebase.bom)
+    // When using the BoM, don't specify versions in Firebase dependencies
+    implementation(libs.firebase.ml.modeldownloader)
+
 }
