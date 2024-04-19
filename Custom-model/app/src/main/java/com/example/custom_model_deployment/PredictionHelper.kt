@@ -6,6 +6,10 @@ import android.util.Log
 import com.google.android.gms.tflite.client.TfLiteInitializationOptions
 import com.google.android.gms.tflite.gpu.support.TfLiteGpu
 import com.google.android.gms.tflite.java.TfLite
+import com.google.firebase.ml.modeldownloader.CustomModel
+import com.google.firebase.ml.modeldownloader.CustomModelDownloadConditions
+import com.google.firebase.ml.modeldownloader.DownloadType
+import com.google.firebase.ml.modeldownloader.FirebaseModelDownloader
 import org.tensorflow.lite.InterpreterApi
 import org.tensorflow.lite.gpu.GpuDelegateFactory
 import java.io.FileInputStream
@@ -35,21 +39,32 @@ class PredictionHelper(
             TfLite.initialize(context, optionsBuilder.build())
         }
             .addOnSuccessListener {
-                loadLocalModel()
+                downloadModel()
+                //loadLocalModel()
             }
             .addOnFailureListener {
                 onError(context.getString(R.string.tflite_is_not_initialized_yet))
             }
     }
 
-    //load machine learning model
-    private fun loadLocalModel() {
-        try {
-            val buffer: ByteBuffer = loadModelFile(context.assets, modelName)
-            initializeInterpreter(buffer)
-        }catch (ioExeption: IOException){
-
-        }
+    //mengunduh model dari firebase
+    @Synchronized
+    private fun downloadModel() {
+        val conditions = CustomModelDownloadConditions.Builder()
+            .requireWifi()
+            .build()
+        FirebaseModelDownloader.getInstance()
+            .getModel("Rice-Stock", DownloadType.LOCAL_MODEL, conditions)
+            .addOnSuccessListener { model: CustomModel ->
+                try {
+                    // download is success and initialize a prediction helper
+                } catch (e: IOException) {
+                    onError(e.message.toString())
+                }
+            }
+            .addOnFailureListener { e: Exception? ->
+                onError(context.getString(R.string.firebaseml_model_download_failed))
+            }
     }
 
     private fun initializeInterpreter(model: Any) {
@@ -57,7 +72,7 @@ class PredictionHelper(
         try {
             val options = InterpreterApi.Options()
                 .setRuntime(InterpreterApi.Options.TfLiteRuntime.FROM_SYSTEM_ONLY)
-            if (isGPUSupported){
+            if (isGPUSupported) {
                 options.addDelegateFactory(GpuDelegateFactory())
             }
             if (model is ByteBuffer) {
@@ -86,22 +101,22 @@ class PredictionHelper(
         }
     }
 
-    fun close(){
+    fun close() {
         interpreter?.close()
     }
 
-    private fun loadModelFile(assetManager: AssetManager, modelPath: String): MappedByteBuffer{
+    private fun loadModelFile(assetManager: AssetManager, modelPath: String): MappedByteBuffer {
         assetManager.openFd(modelPath).use { fileDescriptor ->
             FileInputStream(fileDescriptor.fileDescriptor).use { inputStream ->
                 val fileChannel = inputStream.channel
                 val starOffset = fileDescriptor.startOffset
                 val declaredLength = fileDescriptor.declaredLength
-                return fileChannel.map(FileChannel.MapMode.READ_ONLY,starOffset,declaredLength)
+                return fileChannel.map(FileChannel.MapMode.READ_ONLY, starOffset, declaredLength)
             }
         }
     }
 
-    companion object{
+    companion object {
         private const val TAG = "PredictionHelper"
     }
 
