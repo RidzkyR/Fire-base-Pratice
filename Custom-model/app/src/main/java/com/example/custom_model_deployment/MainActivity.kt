@@ -30,6 +30,9 @@ class MainActivity : AppCompatActivity() {
             },
             onError = {errorMessage ->
                 Toast.makeText(this@MainActivity, errorMessage, Toast.LENGTH_SHORT).show()
+            },
+            onDownloadSuccess = {
+
             }
         )
         binding.btnPredict.setOnClickListener {

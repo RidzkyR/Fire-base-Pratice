@@ -24,6 +24,7 @@ class PredictionHelper(
     val context: Context,
     private val onResult: (String) -> Unit,
     private val onError: (String) -> Unit,
+    private var onDownloadSuccess: () -> Unit
 ) {
     private var isGPUSupported: Boolean = false
     private var interpreter: InterpreterApi? = null
@@ -57,7 +58,7 @@ class PredictionHelper(
             .getModel("Rice-Stock", DownloadType.LOCAL_MODEL, conditions)
             .addOnSuccessListener { model: CustomModel ->
                 try {
-                    // download is success and initialize a prediction helper
+                    onDownloadSuccess()
                 } catch (e: IOException) {
                     onError(e.message.toString())
                 }
